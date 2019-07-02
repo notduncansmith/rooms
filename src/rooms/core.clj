@@ -1,33 +1,30 @@
 (ns rooms.core
-  (:require [rooms.room-registry :refer [empty-room-registry 
+  (:require [rooms.room-registry :refer [empty-room-registry
                                          create-room
                                          remove-room
                                          add-lobby-user
                                          remove-lobby-user
                                          shift-lobby]]
-            [rooms.user-registry :refer [create-user
-                                         set-user-token
-                                         remove-user
-                                         find-user-with-token
-                                         generate-access-token]]
-            [rooms.schema :refer [migrate execute-raw]]))
-
-(defn sql! [sql-str] (execute-raw conn {:raw sql-str}))
+            [rooms.room :refer [send-msg
+                                watch-room
+                                unwatch-room
+                                add-users
+                                remove-users]]))
 
 (def default-registry (atom (empty-room-registry)))
 
-(defn create-room! ([id] (swap! default-registry create-room id))
-                   ([] (swap! default-registry create-room)))
+(defn create-room! ([id sf vf] (swap! default-registry create-room id sf vf))
+                   ([sf vf] (swap! default-registry create-room sf vf)))
+
+(defn get-room! [room-id] (get-in @default-registry [:rooms room-id]))
+(defn update-room! [room-id f] (swap! default-registry update-in [:rooms room-id] f))
 
 (defn remove-room! [room-id] (swap! default-registry remove-room room-id))
 (defn add-lobby-user! [user] (swap! default-registry add-lobby-user user))
 (defn remove-lobby-user! [user-id] (swap! default-registry remove-lobby-user user-id))
 (defn shift-lobby! [f] (swap! default-registry shift-lobby))
-
-(defn create-user! [user] (create-user conn user))
-(defn set-user-token! [user-id token] (set-user-token conn user-id token))
-(defn remove-user! [user-id] (remove-user conn user-id))
-(defn find-user-with-secret! [username secret] (find-user-with-secret conn username secret))
-
-(defn migrate! [] (migrate conn))
-
+(defn send-msg! [room-id user-id msg] (send-msg (get-room! room-id) user-id msg))
+(defn watch-room! [room-id user-id cb] (watch-room (get-room! room-id) user-id cb))
+(defn unwatch-room! [room-id user-id] (unwatch-room (get-room! room-id) user-id))
+(defn add-user! [room-id user] (update-room! room-id #(add-users % [user])))
+(defn remove-user! [room-id user-id] (update-room! room-id #(remove-users % [user-id])))

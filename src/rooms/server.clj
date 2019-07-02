@@ -1,28 +1,46 @@
 (ns rooms.server
   (:use [compojure.route :only [files not-found]]
-        [compojure.core :only [defroutes GET POST DELETE ANY context]]
-        org.httpkit.server))
+        [compojure.core :only [defroutes GET]]
+        rooms.core
+        org.httpkit.server)
+  (:require [msgpack.core :refer [pack unpack]]
+            msgpack.clojure-extensions))
+(defn connect
+  [registry room-id user request]
+  (let [_ (println room-id)
+        deliver! (partial send-msg! room-id (:id user))
+        subscription-id (str (System/currentTimeMillis) (:id user))]
+    (with-channel request channel
+      (println "Registry state" registry)
+      (println "Connection from user" user)
+      (println "Joining room" (get-room! room-id))
+      (add-user! room-id user)
+      (watch-room! room-id subscription-id
+        #(do (send! channel (pack {"state" (clojure.walk/stringify-keys %)}))
+             (println "Sending state: " (clojure.walk/stringify-keys %))))
+      (on-close channel
+        (fn [status]
+          (do (println "channel closed: " status)
+              (unwatch-room! room-id subscription-id)
+              (remove-user! room-id (:id user)))))
+      (on-receive channel #(do (println "Received message: " (unpack %))
+                               (deliver! (unpack %))))
+      (send! channel (pack {"greeting" "Hello"})))))
 
-
-(defn home-page-handler [req] "<h1>Hello</h1>")
-
-(defn websocket-handler [request]
-  ; authenticate request
-  (with-channel request channel
-    ; watch room for changes and broadcast to user
-    (on-close channel (fn [status] (println "channel closed: " status)))
-    (on-receive channel (fn [data] ; construct message envelope -> send message to room agent
-                          (send! channel data)))))
-
-(defn user-details-handler [req]
-  ; auth as above
-  ; display user details
-  "not implemented")
+(defn- get-ip
+  [req]
+  (or (get-in req [:headers "x-forwarded-for"])
+      (:remote-addr req)))
 
 (defroutes all-routes
-  (GET "/" [] home-page-handler)
-  (GET "/user/:id" [] user-details-handler)
-  (GET "/socket" [] websocket-handler)
+  (GET "/room/:id" [id :as req]
+    (let [user {:id (str (System/currentTimeMillis) "-" (get-ip req)) :joined-at (System/currentTimeMillis)}]
+      (connect default-registry id user req)))
   (not-found "<p>Page not found.</p>"))
 
-(run-server all-routes {:port 8080})
+; (defn create-demo-room! []
+(create-room! "demo"
+  (fn [s m] (assoc s :messages (conj (or (:messages s) []) m)))
+  identity)
+
+(defn start-server [opts] (run-server all-routes opts))
