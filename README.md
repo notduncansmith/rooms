@@ -1,8 +1,9 @@
-# rooms
+# rooms - collaborative state with websockets
+
 [![Clojars Project](https://img.shields.io/clojars/v/rooms.svg)](https://clojars.org/rooms)
 
 ```clj
-[rooms "0.1.0"]
+[rooms "0.1.0-SNAPSHOT"]
 ```
 
 Rooms is a Clojure library that aims to simplify the process of building WebSocket apps.
