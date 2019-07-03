@@ -7,6 +7,7 @@
             msgpack.clojure-extensions
             [cheshire.core :as chjson]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]))
+
 (defn connect
   [registry room-id user request encoding]
   (let [_ (println room-id)

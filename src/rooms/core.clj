@@ -1,10 +1,7 @@
 (ns rooms.core
   (:require [rooms.room-registry :refer [empty-room-registry
                                          create-room
-                                         remove-room
-                                         add-lobby-user
-                                         remove-lobby-user
-                                         shift-lobby]]
+                                         remove-room]]
             [rooms.room :refer [send-msg
                                 watch-room
                                 unwatch-room
@@ -20,9 +17,6 @@
 (defn update-room! [room-id f] (swap! default-registry update-in [:rooms room-id] f))
 
 (defn remove-room! [room-id] (swap! default-registry remove-room room-id))
-(defn add-lobby-user! [user] (swap! default-registry add-lobby-user user))
-(defn remove-lobby-user! [user-id] (swap! default-registry remove-lobby-user user-id))
-(defn shift-lobby! [f] (swap! default-registry shift-lobby))
 (defn send-msg! [room-id user-id msg] (send-msg (get-room! room-id) user-id msg))
 (defn watch-room! [room-id user-id cb] (watch-room (get-room! room-id) user-id cb))
 (defn unwatch-room! [room-id user-id] (unwatch-room (get-room! room-id) user-id))
