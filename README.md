@@ -28,6 +28,7 @@ A `Room` is an agent-based state container that users can connect to via WebSock
 ### Client-side
 ```js
 const ws = new WebSocket("ws://localhost:8080/room/demo"); // note room id
+
 ws.onopen = () => {
   setTimeout(() => {
     ws.send(JSON.stringify({greeting: "hello", from: navigator.userAgent}));
