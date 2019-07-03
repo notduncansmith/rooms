@@ -22,7 +22,3 @@
 (defn unwatch-room! [room-id user-id] (unwatch-room (get-room! room-id) user-id))
 (defn add-user! [room-id user] (update-room! room-id #(add-users % [user])))
 (defn remove-user! [room-id user-id] (update-room! room-id #(remove-users % [user-id])))
-
-(create-room! "demo"
-  (fn [s m] (assoc s :messages (conj (or (:messages s) []) m)))
-  identity)
