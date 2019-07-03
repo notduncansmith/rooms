@@ -9,9 +9,11 @@
                  [com.layerware/hugsql "0.4.9"]
                  [http-kit "2.3.0"]
                  [compojure "1.6.1"]
+                 [ring/ring-defaults "0.3.2"]
                  [crypto-random "1.2.0"]
                  [digest "1.4.9"]
-                 [clojure-msgpack "1.2.1"]]
+                 [clojure-msgpack "1.2.1"]
+                 [cheshire "5.8.1"]]
 
   :plugins [[lein-cloverage "1.0.13"]
             [lein-shell "0.5.0"]

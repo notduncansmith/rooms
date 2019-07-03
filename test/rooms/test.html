@@ -40,6 +40,11 @@
           $('#messages').append($(`<li><pre>${JSON.stringify(decoded)}</pre></li>`))
           $('#state').text(JSON.stringify(decoded.state, null, 2))
         });
+      } else if (typeof msg.data === 'string') {
+        const decoded = JSON.parse(msg.data);
+        console.log('decoded JSON: ', decoded);
+        $('#messages').append($(`<li><pre>${JSON.stringify(decoded)}</pre></li>`))
+        $('#state').text(JSON.stringify(decoded.state, null, 2))
       } else {
         $('#messages').append($(`<li><pre>${contents}</pre></li>`))
       }
