@@ -25,7 +25,7 @@
       (watch-room! room-id subscription-id
         #(let [room (get-room! room-id)
                view-fn (:view-fn room)
-               user (get-in room [:users user-id])
+               user (get-in room [:users (:id user)])
                visible-state (clojure.walk/stringify-keys (view-fn % user))
                _ (println "Sending visible-state: " visible-state)]
             (send! channel (pack {"state" visible-state}))))
