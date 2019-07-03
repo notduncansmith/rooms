@@ -19,7 +19,9 @@
       (println "Registry state" registry)
       (println "Connection from user" user)
       (println "Joining room" (get-room! room-id))
+
       (add-user! room-id user)
+
       (watch-room! room-id subscription-id
         #(let [state (clojure.walk/stringify-keys %)
                _ (println "Sending state: " state)]
@@ -41,12 +43,20 @@
   (or (get-in req [:headers "x-forwarded-for"])
       (:remote-addr req)))
 
-(defroutes all-routes
+(def test-page (slurp "./test/rooms/test.html"))
+
+(defroutes api-routes
   (GET "/room/:id" [id encoding :as req]
     (let [user {:id (str (System/currentTimeMillis) "-" (get-ip req)) :joined-at (System/currentTimeMillis)}
           _ (println "ID " id "ENCODING " encoding)]
       (connect default-registry id user req encoding)))
   (not-found "<p>Page not found.</p>"))
 
+(defroutes test-routes
+  (GET "/test" [] {:status 200 :headers {"Content-Type" "text/html"} :body test-page})
+  api-routes)
+
 (defn start-server [opts]
-  (run-server (wrap-defaults all-routes api-defaults) opts))
+  (run-server
+    (wrap-defaults (if (:test opts) test-routes api-routes) api-defaults)
+    opts))
