@@ -20,7 +20,7 @@ A `Room` is an agent-based state container that users can connect to via WebSock
 (create-room!
   "demo"                                           ; room id
   (fn [state msg] (assoc state :last-message msg)) ; state fn
-  (fn [state user-id] state)                       ; view fn
+  (fn [state user] state)                       ; view fn
 
 (start-server {:port 8080})
 ```

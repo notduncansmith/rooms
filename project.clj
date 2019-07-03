@@ -4,8 +4,7 @@
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[clj-ulid "0.1.0-SNAPSHOT"]
-                 [http-kit "2.3.0"]
+  :dependencies [[http-kit "2.3.0"]
                  [compojure "1.6.1"]
                  [ring/ring-defaults "0.3.2"]
                  [clojure-msgpack "1.2.1"]
