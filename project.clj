@@ -1,17 +1,13 @@
-(defproject rooms "0.1.0-SNAPSHOT"
+(defproject rooms "0.1.1-SNAPSHOT"
   :description "Collaborative state with WebSockets"
   :url "https://github.com/notduncansmith/rooms"
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[clj-ulid "0.1.0-SNAPSHOT"]
-                 [org.xerial/sqlite-jdbc "3.23.1"]
-                 [com.layerware/hugsql "0.4.9"]
                  [http-kit "2.3.0"]
                  [compojure "1.6.1"]
                  [ring/ring-defaults "0.3.2"]
-                 [crypto-random "1.2.0"]
-                 [digest "1.4.9"]
                  [clojure-msgpack "1.2.1"]
                  [cheshire "5.8.1"]]
 
