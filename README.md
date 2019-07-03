@@ -26,10 +26,10 @@ A `Room` is an agent-based state container that users can connect to via WebSock
 
 ### Client-side
 ```js
-const ws = new WebSocket("ws://localhost:8080/room/demo");
+const ws = new WebSocket("ws://localhost:8080/room/demo"); // note room id
   ws.onopen = () => {
     setTimeout(() => {
-      ws.send(MessagePack.encode({ greeting: "hello", from: navigator.userAgent }));
+      ws.send(JSON.stringify({ greeting: "hello", from: navigator.userAgent }));
     }, 1000);
   };
 
@@ -40,7 +40,7 @@ const ws = new WebSocket("ws://localhost:8080/room/demo");
 
 ## License
 
-Copyright © 2018 Duncan Smith
+Copyright © 2019 Duncan Smith
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.

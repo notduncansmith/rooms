@@ -25,7 +25,7 @@
     const ws = new WebSocket("ws://localhost:8080/room/demo");
     ws.onopen = () => {
       setTimeout(() => {
-        ws.send(MessagePack.encode({ greeting: "hello", from: navigator.userAgent }));
+        ws.send(JSON.stringify({ greeting: "hello", from: navigator.userAgent }));
       }, 1000);
     };
 
