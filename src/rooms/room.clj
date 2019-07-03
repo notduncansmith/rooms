@@ -7,7 +7,7 @@
 
 (defn send-msg
   [room user-id msg]
-  (update-room room (:state-fn room) {:user-id user-id :data msg}))
+  (update-room room (:state-fn room) {:user (get-in room [:users user-id]) :data msg}))
 
 (defn add-users
   [room users]
