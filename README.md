@@ -3,7 +3,7 @@
 [![Clojars Project](https://img.shields.io/clojars/v/rooms.svg)](https://clojars.org/rooms)
 
 ```clj
-[rooms "0.2.1-SNAPSHOT"]
+[rooms "0.2.2-SNAPSHOT"]
 ```
 
 Rooms is a Clojure library that aims to simplify the process of building WebSocket apps.

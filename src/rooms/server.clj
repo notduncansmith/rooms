@@ -13,7 +13,7 @@
   (let [_ (println room-id)
         pack (if (= encoding "msgpack") mp/pack chjson/generate-string)
         unpack (if (= encoding "msgpack") mp/unpack chjson/parse-string)
-        deliver! (partial send-msg! room-id (:id user))
+        deliver! (partial send-user-msg! room-id (:id user))
         subscription-id (str (System/currentTimeMillis) (:id user))]
     (with-channel request channel
       (println "Registry state" registry)
@@ -25,8 +25,8 @@
       (watch-room! room-id subscription-id
         #(let [room (get-room! room-id)
                view-fn (:view-fn room)
-               user (get-in room [:users (:id user)])
-               visible-state (clojure.walk/stringify-keys (view-fn % user))
+               current-user (or (get-in room [:users (:id user)]) user)
+               visible-state (clojure.walk/stringify-keys (view-fn % current-user))
                _ (println "Sending visible-state: " visible-state)]
             (send! channel (pack {"state" visible-state}))))
 

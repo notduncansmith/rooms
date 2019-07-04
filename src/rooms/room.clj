@@ -4,10 +4,11 @@
 
 (defn empty-room [id sf vf] (Room. id (agent {:users {}}) sf vf))
 (defn update-room [room f & args] (do (apply send (:agent room) f args) room))
+(defn send-raw-msg [room msg] (update-room room (:state-fn room) {:data msg}))
 
-(defn send-msg
+(defn send-user-msg
   [room user-id msg]
-  (update-room room (:state-fn room) {:user (get-in room [:users user-id]) :data msg}))
+  (send-raw-msg room {:user (get-in room [:users user-id]) :data msg}))
 
 (defn add-users
   [room users]

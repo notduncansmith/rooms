@@ -2,7 +2,8 @@
   (:require [rooms.room-registry :refer [empty-room-registry
                                          create-room
                                          remove-room]]
-            [rooms.room :refer [send-msg
+            [rooms.room :refer [send-user-msg
+                                send-raw-msg
                                 watch-room
                                 unwatch-room
                                 add-users
@@ -17,7 +18,8 @@
 (defn update-room! [room-id f] (swap! default-registry update-in [:rooms room-id] f))
 
 (defn remove-room! [room-id] (swap! default-registry remove-room room-id))
-(defn send-msg! [room-id user-id msg] (send-msg (get-room! room-id) user-id msg))
+(defn send-raw-msg! [room-id msg] (send-raw-msg (get-room! room-id) msg))
+(defn send-user-msg! [room-id user-id msg] (send-user-msg (get-room! room-id) user-id msg))
 (defn watch-room! [room-id user-id cb] (watch-room (get-room! room-id) user-id cb))
 (defn unwatch-room! [room-id user-id] (unwatch-room (get-room! room-id) user-id))
 (defn add-user! [room-id user] (update-room! room-id #(add-users % [user])))
