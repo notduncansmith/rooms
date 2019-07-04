@@ -21,6 +21,7 @@
       (println "Joining room" (get-room! room-id))
 
       (add-user! room-id user)
+      (send-raw-msg! room-id {"type" "connected" "user" user})
 
       (watch-room! room-id subscription-id
         #(let [room (get-room! room-id)
@@ -34,6 +35,7 @@
         (fn [status]
           (do (println "channel closed: " status)
               (unwatch-room! room-id subscription-id)
+              (send-raw-msg! room-id {"type" "disconnected" "user" (get-user! room-id (:id user))})
               (remove-user! room-id (:id user)))))
 
       (on-receive channel #(do (println "Received message: " (unpack %))

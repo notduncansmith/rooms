@@ -16,6 +16,7 @@
 
 (defn get-room! [room-id] (get-in @default-registry [:rooms room-id]))
 (defn update-room! [room-id f] (swap! default-registry update-in [:rooms room-id] f))
+(defn get-user! [room-id user-id] (get-in @(:agent (get-room! room-id)) [:users user-id]))
 
 (defn remove-room! [room-id] (swap! default-registry remove-room room-id))
 (defn send-raw-msg! [room-id msg] (send-raw-msg (get-room! room-id) msg))
