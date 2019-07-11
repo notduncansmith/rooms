@@ -21,9 +21,9 @@
   (update-room room update :users #(apply dissoc % user-ids)))
 
 (defn watch-room
-  [room user-id cb]
-  (add-watch (:agent room) user-id (fn [k ref old-state new-state] (cb new-state))))
+  [room key cb]
+  (add-watch (:agent room) key (fn [k ref old-state new-state] (cb new-state))))
 
 (defn unwatch-room
-  [room user-id]
-  (remove-watch (:agent room) user-id))
+  [room key]
+  (remove-watch (:agent room) key))
