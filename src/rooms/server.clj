@@ -6,6 +6,7 @@
   (:require [msgpack.core :as mp]
             msgpack.clojure-extensions
             [cheshire.core :as chjson]
+            [rooms.room-registry :as room-registry]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]))
 
 (defn connect
@@ -13,18 +14,15 @@
   (let [_ (println room-id)
         pack (if (= encoding "msgpack") mp/pack chjson/generate-string)
         unpack (if (= encoding "msgpack") mp/unpack chjson/parse-string)
-        deliver! (partial send-user-msg! room-id (:id user))
+        deliver! #(room-registry/send-user-msg @registry room-id (:id user) %)
+        deliver-raw! #(room-registry/send-raw-msg @registry room-id %)
         subscription-id (str (System/currentTimeMillis) (:id user))]
     (with-channel request channel
-      (println "Registry state" registry)
-      (println "Connection from user" user)
-      (println "Joining room" (get-room! room-id))
+      (room-registry/add-user @registry room-id user)
+      (deliver-raw! @registry room-id {"type" "connected" "user" user})
 
-      (add-user! room-id user)
-      (send-raw-msg! room-id {"type" "connected" "user" user})
-
-      (watch-room! room-id subscription-id
-        #(let [room (get-room! room-id)
+      (room-registry/watch-room @registry room-id subscription-id
+        #(let [room (room-registry/get-room @registry room-id)
                view-fn (:view-fn room)
                current-user (or (get-in room [:users (:id user)]) user)
                visible-state (clojure.walk/stringify-keys (view-fn % current-user))
@@ -34,9 +32,11 @@
       (on-close channel
         (fn [status]
           (do (println "channel closed: " status)
-              (unwatch-room! room-id subscription-id)
-              (send-raw-msg! room-id {"type" "disconnected" "user" (get-user! room-id (:id user))})
-              (remove-user! room-id (:id user)))))
+              (unwatch-room @registry room-id subscription-id)
+              (remove-user @registry room-id (:id user))
+              (deliver-raw! room-id
+                {"type" "disconnected"
+                 "user" (room-registry/get-user @registry room-id (:id user))}))))
 
       (on-receive channel #(do (println "Received message: " (unpack %))
                                (deliver! (unpack %))))
