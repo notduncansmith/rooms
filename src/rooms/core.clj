@@ -108,19 +108,18 @@
         subscription-id (str (System/currentTimeMillis) (:id user))]
     (httpkit/with-channel request channel
       (add-users! registry room-id [user])
-      (deliver! {"type" "connected"})
 
       (watch-room! registry room-id subscription-id
         #(let [room (get-room @registry room-id)
                view-fn (:view-fn room)
-               current-user (or (get-in room [:users (:id user)]) user)
+               current-user (or (get-in room [:users user-id]) user)
                visible-state (clojure.walk/stringify-keys (view-fn % current-user))]
-            (send! channel (pack {"state" visible-state}))))
+            (httpkit/send! channel (pack {"state" visible-state}))))
 
       (httpkit/on-close channel
         (fn [status]
-          (do (unwatch-room! registry room-id subscription-id)
-              (remove-users! registry room-id [(:id user)])
-              (deliver! {"type" "disconnected"}))))
+          (do (println "Disconnected " user-id status)
+              (unwatch-room! registry room-id subscription-id)
+              (remove-users! registry room-id [user-id]))))
 
       (httpkit/on-receive channel (comp deliver! unpack)))))

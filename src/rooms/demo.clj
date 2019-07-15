@@ -102,7 +102,7 @@
   (let [realopts (merge {:port 8080 :test true} (or (first opts) {}))]
     (do (create-room! demo-registry
           "demo"
-          (fn [s m] (assoc s :last-message m))
+          (fn [s m] (do (println "RCV:" m) (assoc s :last-message m)))
           (fn [s uid] s))
         (reset! stopper (start-server realopts))
         (println "Started demo server on port " (:port realopts)))))

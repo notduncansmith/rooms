@@ -1,4 +1,4 @@
-(defproject rooms "0.3.0-SNAPSHOT"
+(defproject rooms "0.4.4-SNAPSHOT"
   :description "Collaborative state with WebSockets"
   :url "https://github.com/notduncansmith/rooms"
   :license {:name "Eclipse Public License"
