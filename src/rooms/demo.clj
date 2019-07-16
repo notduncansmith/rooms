@@ -2,10 +2,10 @@
   (:use [compojure.route :only [files not-found]]
         [compojure.core :only [defroutes GET]]
         org.httpkit.server)
-  (:require [rooms.core :refer [empty-room-registry create-room! connect!]]
+  (:require [rooms.core :as rooms]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]))
 
-(def demo-registry (atom (empty-room-registry 2)))
+(def demo-registry (atom (rooms/empty-room-registry 2)))
 
 (def test-page (atom "
 <html>
@@ -74,6 +74,8 @@
 </html>
 "))
 
+(def create-room! (partial rooms/create-room! demo-registry))
+
 (defn- set-test-port!
   [port] (swap! test-page clojure.string/replace #"localhost:\d*" (str "localhost:" port)))
 
@@ -87,7 +89,7 @@
   (GET "/room/:id" [id encoding :as req]
     (let [user {:id (str (System/currentTimeMillis) "-" (get-ip req)) :joined-at (System/currentTimeMillis)}
           _ (println "ID " id "ENCODING " (or encoding "json"))]
-      (connect! demo-registry id user req encoding)))
+      (rooms/connect! demo-registry id user req encoding)))
   (not-found "<p>Page not found.</p>"))
 
 (defn start-server [opts]
@@ -99,9 +101,8 @@
 (def stopper (atom nil))
 
 (defn start [& opts]
-  (let [realopts (merge {:port 8080 :test true} (or (first opts) {}))]
-    (do (create-room! demo-registry
-          "demo"
+  (let [realopts (merge {:port 8080} (or (first opts) {}))]
+    (do (create-room! "demo"
           (fn [s m] (do (println "RCV:" m) (assoc s :last-message m)))
           (fn [s uid] s))
         (reset! stopper (start-server realopts))

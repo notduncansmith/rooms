@@ -3,7 +3,7 @@
 [![Clojars Project](https://img.shields.io/clojars/v/rooms.svg)](https://clojars.org/rooms)
 
 ```clj
-[rooms "0.2.3-SNAPSHOT"]
+[rooms "0.4.5-SNAPSHOT"]
 ```
 
 Rooms is a Clojure library that aims to simplify the process of building WebSocket apps.
@@ -14,15 +14,14 @@ A `Room` is an agent-based state container that users can connect to via WebSock
 
 ### Server-side
 ```clj
-(require '[rooms.core :refer [create-room!]])
-(require '[rooms.server :refer [start-server]])
+(require '[rooms.demo :refer [start create-room!]])
 
 (create-room!
-  "demo"                                           ; room id
+  "demo" ; room id
   (fn [state msg] (assoc state :last-message msg)) ; state fn
-  (fn [state user] state)                       ; view fn
+  (fn [state user] state) ; view fn
 
-(start-server {:port 8080})
+(start {:port 8080})
 ```
 
 ### Client-side
@@ -39,6 +38,8 @@ ws.onmessage = (msg) => {
   console.log(JSON.parse(msg.data));
 }
 ```
+
+Check out [`rooms.demo`](https://github.com/notduncansmith/rooms/blob/master/src/rooms/demo.clj) for a more comprehensive look, including a test page you can visit in your browser.
 
 **This project is graciously sponsored by Dubsado ❤️**
 
