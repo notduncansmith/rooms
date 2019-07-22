@@ -92,7 +92,7 @@
       (rooms/connect! demo-registry id user req encoding)))
   (not-found "<p>Page not found.</p>"))
 
-(defn start-server [opts]
+(defn- start-server [opts]
   (do (set-test-port! (:port opts))
       (run-server
         (wrap-defaults demo-routes api-defaults)

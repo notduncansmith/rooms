@@ -3,8 +3,11 @@
 (defrecord Room [id agent state-fn view-fn])
 
 (defn empty-room [id sf vf] (Room. id (agent {:id id :users {} :created-at (System/currentTimeMillis)}) sf vf))
-(defn apply-msg [room state msg] ((:state-fn room) state msg))
-(defn apply-user-msg [room state user-id msg] (apply-msg room state (assoc msg :user (get-in state [:users user-id]))))
+(defn apply-msg
+  ([room state msg] ((:state-fn room) state msg))
+  ([room state user msg] (apply-msg room state (assoc msg :user user))))
+
+(defn apply-user-msg [room state user-id msg] (apply-msg room state (get-in state [:users user-id]) msg))
 
 (defn update-room [room f & args] (do (apply send (:agent room) f args) room))
 (defn send-raw-msg [room msg] (update-room room #(apply-msg room % msg)))
@@ -19,12 +22,9 @@
   [room users]
   (update-room room
     (fn [state]
-      (reduce #(do (println "Adding" %2 "to" %)
-                   (apply-user-msg
-                     room
-                     (assoc-in % [:users (:id %2)] %2)
-                     (:id %2)
-                     {:data {"type" "connected"}}))
+      (reduce #(apply-msg room (assoc-in % [:users (:id %2)] %2)
+                               %2
+                               {:data {"type" "connected"}})
               state
               users))))
 
@@ -32,11 +32,17 @@
   [room user-ids]
   (update-room room
     (fn [state]
-      (reduce #(-> room
-                   (apply-user-msg % %2 {:data {"type" "disconnected"}})
-                   (update :users dissoc %2))
+      (reduce #(if (nil? (get-in state [:users %2]))
+                   state
+                   (apply-msg room (update % :users dissoc %2)
+                                   (get-in state [:users %2])
+                                   {:data {"type" "disconnected"}}))
               state
               user-ids))))
+
+(defn get-users [room] (:users @(:agent room)))
+
+(defn remove-all-users [room] (remove-users room (keys (get-users room))))
 
 (defn watch-room
   [room key cb]

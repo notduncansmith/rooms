@@ -42,6 +42,10 @@
   "Remove users from a room in a registry"
   [reg room-id users] (room/remove-users (get-room reg room-id) users))
 
+(defn remove-all-users
+  "Remove all users from a room in a registry"
+  [reg room-id] (room/remove-all-users (get-room reg room-id)))
+
 (defn send-raw-msg
   "Send an anonymous message to a room"
   [reg room-id msg] (room/send-raw-msg (get-room reg room-id) msg))
@@ -98,28 +102,43 @@
   "Remove users from a room in a registry atom"
   [reg-atom room-id user-ids] (remove-users @reg-atom room-id user-ids))
 
+(defn get-users!
+  "Get a vector of the users in a room"
+  [reg-atom id] (room/get-users (get-room! reg-atom id)))
+
+(defn remove-all-users!
+  "Remove all the users from a room"
+  [reg-atom id] (remove-all-users @reg-atom id))
+
+(defn await-room!
+  "Wait until a room's agent has processed all messages from this thread"
+  [reg-atom id] (-> reg-atom (get-room! id) (:agent) (await)))
+
 (defn connect!
   "Add a user to a room in a registry and establish a WebSocket channel via HttpKit (https://www.http-kit.org) through which messages are received from the user and room states (filtered by their view-fn) are sent to the user"
-  [registry room-id user request encoding]
+  [reg-atom room-id user request encoding]
   (let [user-id (:id user)
         pack (if (= encoding "msgpack") mp/pack chjson/generate-string)
         unpack (if (= encoding "msgpack") mp/unpack chjson/parse-string)
-        deliver! #(send-user-msg @registry room-id (:id user) %)
+        deliver! #(send-user-msg @reg-atom room-id (:id user) {:data %})
         subscription-id (str (System/currentTimeMillis) (:id user))]
-    (httpkit/with-channel request channel
-      (add-users! registry room-id [user])
 
-      (watch-room! registry room-id subscription-id
-        #(let [room (get-room @registry room-id)
-               view-fn (:view-fn room)
-               current-user (or (get-in room [:users user-id]) user)
-               visible-state (clojure.walk/stringify-keys (view-fn % current-user))]
-            (httpkit/send! channel (pack {"state" visible-state}))))
+    (httpkit/with-channel request channel
+      (do
+        (add-users! reg-atom room-id [user])
+        (await-room! reg-atom room-id)
+        (watch-room! reg-atom room-id subscription-id
+          #(let [view-fn (:view-fn (get-room! reg-atom room-id))
+                 _ (println "state" %)
+                 current-user (get-in % [:users user-id])]
+              (if (nil? current-user)
+                (httpkit/close channel)
+                (httpkit/send! channel (pack {"state" (clojure.walk/stringify-keys (view-fn % current-user))}))))))
 
       (httpkit/on-close channel
         (fn [status]
           (do (println "Disconnected " user-id status)
-              (unwatch-room! registry room-id subscription-id)
-              (remove-users! registry room-id [user-id]))))
+              (unwatch-room! reg-atom room-id subscription-id)
+              (remove-users! reg-atom room-id [user-id]))))
 
       (httpkit/on-receive channel (comp deliver! unpack)))))
