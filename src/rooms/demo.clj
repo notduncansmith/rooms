@@ -87,8 +87,7 @@
 (defroutes demo-routes
   (GET "/test" [_ :as req] (identity {:status 200 :headers {"Content-Type" "text/html"} :body @test-page}))
   (GET "/room/:id" [id encoding :as req]
-    (let [user {:id (str (System/currentTimeMillis) "-" (get-ip req)) :joined-at (System/currentTimeMillis)}
-          _ (println "ID " id "ENCODING " (or encoding "json"))]
+    (let [user {:id (str (System/currentTimeMillis) "-" (get-ip req)) :joined-at (System/currentTimeMillis)}]
       (rooms/connect! demo-registry id user req encoding)))
   (not-found "<p>Page not found.</p>"))
 

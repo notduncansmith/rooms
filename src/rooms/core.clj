@@ -129,7 +129,6 @@
         (await-room! reg-atom room-id)
         (watch-room! reg-atom room-id subscription-id
           #(let [view-fn (:view-fn (get-room! reg-atom room-id))
-                 _ (println "state" %)
                  current-user (get-in % [:users user-id])]
               (if (nil? current-user)
                 (httpkit/close channel)
@@ -137,8 +136,7 @@
 
       (httpkit/on-close channel
         (fn [status]
-          (do (println "Disconnected " user-id status)
-              (unwatch-room! reg-atom room-id subscription-id)
+          (do (unwatch-room! reg-atom room-id subscription-id)
               (remove-users! reg-atom room-id [user-id]))))
 
       (httpkit/on-receive channel (comp deliver! unpack)))))
