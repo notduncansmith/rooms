@@ -30,44 +30,59 @@
   <script crossorigin src='https://unpkg.com/@msgpack/msgpack'></script>
 
   <script>
-    const ws = new WebSocket('ws://localhost:8080/room/demo');
-    ws.onopen = () => {
-      setTimeout(() => {
-        ws.send(JSON.stringify({ greeting: 'hello', from: navigator.userAgent }));
-      }, 1000);
-    };
+    const ws = connect('demo', {
+      onConnect() {
+        setTimeout(() => {
+          this.send(JSON.stringify({ greeting: 'hello', from: navigator.userAgent }));
+        }, 1000);
+      },
 
-    ws.onmessage = (msg) => {
-      console.log(msg);
-      let contents = msg.data;
-      if (msg.data instanceof Blob) {
-        blobBytes(msg.data).then(bz => {
-          console.log('bz: ', bz);
-          const decoded = MessagePack.decode(bz);
-          console.log('decoded: ', decoded);
-          $('#messages').append($(`<li><pre>${JSON.stringify(decoded)}</pre></li>`))
-          $('#state').text(JSON.stringify(decoded.state, null, 2))
-        });
-      } else if (typeof msg.data === 'string') {
-        const decoded = JSON.parse(msg.data);
-        console.log('decoded JSON: ', decoded);
+      onMessage(msg) {
+        console.log(msg);
+        let contents = msg.data;
+        let decoded = parseMsgpackOrJSON(msg);
+
         $('#messages').append($(`<li><pre>${JSON.stringify(decoded)}</pre></li>`))
         $('#state').text(JSON.stringify(decoded.state, null, 2))
-      } else {
-        $('#messages').append($(`<li><pre>${contents}</pre></li>`))
       }
+    });
+
+    function connect(roomId, {onConnect, onMessage}) {
+      const ws = new WebSocket('ws://localhost:8080/room/' + roomId);
+      ws.onopen = onConnect.bind(ws);
+      ws.onmessage = onMessage.bind(ws);
+      return ws;
     }
 
     function blobBytes(blob) {
       return new Promise((resolve, reject) => {
         let reader = new FileReader();
-        reader.addEventListener('loadend', function () {
+        reader.addEventListener('loadend', () => {
           const buf = reader.result;
           const bz = new Uint8Array(buf, 0, buf.byteLength);
           resolve(bz);
         });
         reader.readAsArrayBuffer(blob);
       });
+    }
+
+    function parseMsgpackOrJSON(msg) {
+      if (msg.data instanceof Blob) {
+        blobBytes(msg.data).then(bz => {
+          const decoded = MessagePack.decode(bz);
+          console.log('Decoded MessagePack: ', decoded);
+          return decoded;
+        });
+      }
+      else if (typeof msg.data === 'string') {
+        const decoded = JSON.parse(msg.data);
+        console.log('Decoded JSON: ', decoded);
+        return decoded;
+      }
+      else {
+        console.error('Could not decode message: ', msg);
+        throw new Error('Could not decode message');
+      }
     }
   </script>
 </body>
@@ -85,7 +100,7 @@
       (:remote-addr req)))
 
 (defroutes demo-routes
-  (GET "/test" [_ :as req] (identity {:status 200 :headers {"Content-Type" "text/html"} :body @test-page}))
+  (GET "/" [_ :as req] (identity {:status 200 :headers {"Content-Type" "text/html"} :body @test-page}))
   (GET "/room/:id" [id encoding :as req]
     (let [user {:id (str (System/currentTimeMillis) "-" (get-ip req)) :joined-at (System/currentTimeMillis)}]
       (rooms/connect! demo-registry id user req encoding)))
